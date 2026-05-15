@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>番茄钟 - Pomodoro Timer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0f0f1a;
+            --surface: #1a1a2e;
+            --surface2: #222240;
+            --text: #e8e8f0;
+            --text-secondary: #8888aa;
+            --pomodoro: #e85d5d;
+            --short-break: #4da6a6;
+            --long-break: #5b8cce;
+            --accent: var(--pomodoro);
+            --ring-bg: #222240;
+        }
+
+        body {
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-app-region: drag;
+        }
+
+        .app {
+            background: var(--surface);
+            border-radius: 32px;
+            padding: 40px 44px 36px;
+            width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+            -webkit-app-region: no-drag;
+        }
+
+        /* ---- Mode Tabs ---- */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: var(--surface2);
+            border-radius: 28px;
+            padding: 5px;
+            margin-bottom: 36px;
+            width: 100%;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px 8px;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+        .tab.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .tab:not(.active):hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* ---- Timer Ring ---- */
+        .timer-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin-bottom: 32px;
+        }
+        .timer-ring {
+            transform: rotate(-90deg);
+            width: 260px;
+            height: 260px;
+        }
+        .ring-bg {
+            fill: none;
+            stroke: var(--ring-bg);
+            stroke-width: 8;
+        }
+        .ring-progress {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s linear, stroke 0.4s ease;
+        }
+        .time-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+        }
+        .time-display.paused {
+            color: var(--text-secondary);
+        }
+
+        /* ---- Controls ---- */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .btn {
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            outline: none;
+            font-family: inherit;
+        }
+        .btn-main {
+            width: 160px;
+            padding: 14px 0;
+            border-radius: 28px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 18px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .btn-main:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-main:active { transform: translateY(0); filter: brightness(0.95); }
+
+        .btn-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--surface2);
+            color: var(--text-secondary);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-icon:hover { background: #2e2e50; color: var(--text); }
+
+        /* ---- Session Counter ---- */
+        .session-info {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .session-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .session-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--surface2);
+            transition: background 0.3s ease;
+        }
+        .session-dot.done {
+            background: var(--accent);
+        }
+
+        /* ---- Settings ---- */
+        .settings-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 6px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .settings-toggle:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+        .settings-panel {
+            width: 100%;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s ease, margin-top 0.35s ease, opacity 0.25s ease;
+            opacity: 0;
+            margin-top: 0;
+        }
+        .settings-panel.open {
+            max-height: 200px;
+            opacity: 1;
+            margin-top: 16px;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .settings-row label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .settings-row input[type="range"] {
+            width: 120px;
+            accent-color: var(--accent);
+        }
+        .settings-row .value {
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            width: 40px;
+            text-align: right;
+        }
+        .settings-row input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ---- Footer ---- */
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* ---- Toast ---- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface2);
+            color: var(--text);
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 100;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- Mode Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-mode="pomodoro">🍅 专注</button>
+            <button class="tab" data-mode="shortBreak">☕ 短休息</button>
+            <button class="tab" data-mode="longBreak">🧘 长休息</button>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-container">
+            <svg class="timer-ring" viewBox="0 0 260 260">
+                <circle class="ring-bg" cx="130" cy="130" r="122"/>
+                <circle class="ring-progress" cx="130" cy="130" r="122"
+                        stroke-dasharray="766.5" stroke-dashoffset="0"/>
+            </svg>
+            <div class="time-display">25:00</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-icon" id="resetBtn" title="重置">↺</button>
+            <button class="btn btn-main" id="startBtn">开 始</button>
+            <button class="btn btn-icon" id="skipBtn" title="跳过">⏭</button>
+        </div>
+
+        <!-- Session Info -->
+        <div class="session-info">
+            <span>已完成: <strong id="sessionCount">0</strong> / 4 轮</span>
+            <div class="session-dots" id="sessionDots"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <button class="settings-toggle" id="settingsToggle" title="设置">⚙</button>
+            <span style="font-size: 11px; color: var(--text-secondary); opacity: 0.5;">🍅 Pomodoro</span>
+            <span></span>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-row">
+                <label>专注时长</label>
+                <input type="range" id="pomodoroTime" min="5" max="60" value="25" step="1">
+                <span class="value" id="pomodoroTimeVal">25 分</span>
+            </div>
+            <div class="settings-row">
+                <label>短休息时长</label>
+                <input type="range" id="shortBreakTime" min="1" max="30" value="5" step="1">
+                <span class="value" id="shortBreakTimeVal">5 分</span>
+            </div>
+            <div class="settings-row">
+                <label>长休息时长</label>
+                <input type="range" id="longBreakTime" min="5" max="60" value="15" step="1">
+                <span class="value" id="longBreakTimeVal">15 分</span>
+            </div>
+            <div class="settings-row">
+                <label>自动开始下一轮</label>
+                <input type="checkbox" id="autoStart">
+            </div>
+            <div class="settings-row">
+                <label>长休息间隔</label>
+                <input type="range" id="longBreakInterval" min="2" max="6" value="4" step="1">
+                <span class="value" id="longBreakIntervalVal">4 轮</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ─── State ──────────────────────────────────
+        const CIRCUMFERENCE = 2 * Math.PI * 122; // ~766.5
+
+        const config = {
+            pomodoro: 25 * 60,
+            shortBreak: 5 * 60,
+            longBreak: 15 * 60,
+            longBreakInterval: 4,
+            autoStart: false,
+        };
+
+        let state = {
+            mode: 'pomodoro',
+            timeLeft: config.pomodoro,
+            totalTime: config.pomodoro,
+            isRunning: false,
+            sessionsCompleted: 0,
+            timerId: null,
+        };
+
+        // ─── DOM Elements ───────────────────────────
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        const el = {
+            tabs: $$('.tab'),
+            timeDisplay: $('.time-display'),
+            ringProgress: $('.ring-progress'),
+            startBtn: $('#startBtn'),
+            resetBtn: $('#resetBtn'),
+            skipBtn: $('#skipBtn'),
+            sessionCount: $('#sessionCount'),
+            sessionDots: $('#sessionDots'),
+            settingsToggle: $('#settingsToggle'),
+            settingsPanel: $('#settingsPanel'),
+            toast: $('#toast'),
+            // Settings inputs
+            pomodoroTime: $('#pomodoroTime'),
+            shortBreakTime: $('#shortBreakTime'),
+            longBreakTime: $('#longBreakTime'),
+            pomodoroTimeVal: $('#pomodoroTimeVal'),
+            shortBreakTimeVal: $('#shortBreakTimeVal'),
+            longBreakTimeVal: $('#longBreakTimeVal'),
+            autoStart: $('#autoStart'),
+            longBreakInterval: $('#longBreakInterval'),
+            longBreakIntervalVal: $('#longBreakIntervalVal'),
+        };
+
+        // ─── Audio Engine ───────────────────────────
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+
+        function playBeep(freq, duration, type = 'sine', vol = 0.15) {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(vol, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+            } catch(e) { /* audio not available */ }
+        }
+
+        function playAlert() {
+            // Pleasant chime sequence
+            playBeep(660, 0.15, 'sine', 0.12);
+            setTimeout(() => playBeep(880, 0.2, 'sine', 0.12), 150);
+            setTimeout(() => playBeep(1100, 0.35, 'sine', 0.1), 300);
+        }
+
+        function playClick() {
+            playBeep(800, 0.06, 'sine', 0.05);
+        }
+
+        // ─── Notifications ──────────────────────────
+        function notify(title, body) {
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body, icon: '🍅' });
+            } else if (Notification.permission === 'default') {
+                Notification.requestPermission().then(p => {
+                    if (p === 'granted') new Notification(title, { body, icon: '🍅' });
+                });
+            }
+        }
+
+        // ─── Toast ───────────────────────────────────
+        let toastTimer = null;
+        function showToast(msg) {
+            const t = el.toast;
+            t.textContent = msg;
+            t.classList.add('show');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // ─── Render ─────────────────────────────────
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function updateDisplay() {
+            // Time
+            el.timeDisplay.textContent = formatTime(state.timeLeft);
+            el.timeDisplay.classList.toggle('paused', !state.isRunning && state.timeLeft < state.totalTime);
+
+            // Ring
+            const fraction = state.timeLeft / state.totalTime;
+            const offset = CIRCUMFERENCE * (1 - fraction);
+            el.ringProgress.style.strokeDashoffset = offset;
+
+            // Accent color
+            const root = document.documentElement;
+            if (state.mode === 'pomodoro') root.style.setProperty('--accent', 'var(--pomodoro)');
+            else if (state.mode === 'shortBreak') root.style.setProperty('--accent', 'var(--short-break)');
+            else root.style.setProperty('--accent', 'var(--long-break)');
+
+            // Button
+            el.startBtn.textContent = state.isRunning ? '暂 停' : '开 始';
+
+            // Tabs
+            el.tabs.forEach(t => {
+                t.classList.toggle('active', t.dataset.mode === state.mode);
+            });
+
+            // Dots
+            renderDots();
+            el.sessionCount.textContent = state.sessionsCompleted;
+        }
+
+        function renderDots() {
+            let html = '';
+            for (let i = 0; i < config.longBreakInterval; i++) {
+                html += `<div class="session-dot${i < state.sessionsCompleted % config.longBreakInterval ? ' done' : ''}"></div>`;
+            }
+            el.sessionDots.innerHTML = html;
+        }
+
+        // ─── Timer Control ──────────────────────────
+        function stopTimer() {
+            if (state.timerId) {
+                clearInterval(state.timerId);
+                state.timerId = null;
+            }
+            state.isRunning = false;
+        }
+
+        function startTimer() {
+            if (state.timerId) return;
+            state.isRunning = true;
+
+            // Resume audio context on user gesture
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+            state.timerId = setInterval(() => {
+                state.timeLeft--;
+                updateDisplay();
+
+                if (state.timeLeft <= 0) {
+                    onTimerEnd();
+                }
+            }, 1000);
+        }
+
+        function onTimerEnd() {
+            stopTimer();
+            playAlert();
+
+            if (state.mode === 'pomodoro') {
+                state.sessionsCompleted++;
+                notify('🍅 番茄钟完成！', '专注时间结束，该休息一下了~');
+
+                if (state.sessionsCompleted % config.longBreakInterval === 0) {
+                    switchMode('longBreak');
+                    showToast('已完成 ' + config.longBreakInterval + ' 轮！享受长休息吧 🧘');
+                } else {
+                    switchMode('shortBreak');
+                    showToast('专注结束！休息一下吧 ☕');
+                }
+            } else if (state.mode === 'shortBreak') {
+                notify('☕ 休息结束', '准备开始新的番茄钟吧！');
+                switchMode('pomodoro');
+                showToast('休息结束，继续加油！🍅');
+            } else if (state.mode === 'longBreak') {
+                notify('🧘 长休息结束', '精力满满，开始新一轮吧！');
+                switchMode('pomodoro');
+                showToast('长休息结束，开启新循环！🍅');
+            }
+
+            if (config.autoStart && state.mode === 'pomodoro') {
+                startTimer();
+            }
+
+            updateDisplay();
+        }
+
+        function toggleTimer() {
+            if (state.isRunning) {
+                stopTimer();
+                updateDisplay();
+            } else {
+                // Reset if timer is finished
+                if (state.timeLeft <= 0) {
+                    state.timeLeft = state.totalTime;
+                }
+                startTimer();
+                updateDisplay();
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            state.timeLeft = state.totalTime;
+            updateDisplay();
+            playClick();
+        }
+
+        function skipTimer() {
+            stopTimer();
+            state.timeLeft = 0;
+            onTimerEnd();
+            updateDisplay();
+            playClick();
+        }
+
+        function switchMode(mode) {
+            stopTimer();
+            state.mode = mode;
+            if (mode === 'pomodoro') state.totalTime = config.pomodoro;
+            else if (mode === 'shortBreak') state.totalTime = config.shortBreak;
+            else state.totalTime = config.longBreak;
+            state.timeLeft = state.totalTime;
+            updateDisplay();
+            playClick();
+        }
+
+        // ─── Settings ───────────────────────────────
+        function updateConfig() {
+            config.pomodoro = parseInt(el.pomodoroTime.value) * 60;
+            config.shortBreak = parseInt(el.shortBreakTime.value) * 60;
+            config.longBreak = parseInt(el.longBreakTime.value) * 60;
+            config.longBreakInterval = parseInt(el.longBreakInterval.value);
+            config.autoStart = el.autoStart.checked;
+
+            // Update display values
+            el.pomodoroTimeVal.textContent = el.pomodoroTime.value + ' 分';
+            el.shortBreakTimeVal.textContent = el.shortBreakTime.value + ' 分';
+            el.longBreakTimeVal.textContent = el.longBreakTime.value + ' 分';
+            el.longBreakIntervalVal.textContent = el.longBreakInterval.value + ' 轮';
+
+            // Reset current timer to match new config
+            stopTimer();
+            if (state.mode === 'pomodoro') state.totalTime = config.pomodoro;
+            else if (state.mode === 'shortBreak') state.totalTime = config.shortBreak;
+            else state.totalTime = config.longBreak;
+            state.timeLeft = state.totalTime;
+            updateDisplay();
+        }
+
+        // ─── Event Listeners ────────────────────────
+        el.startBtn.addEventListener('click', toggleTimer);
+        el.resetBtn.addEventListener('click', resetTimer);
+        el.skipBtn.addEventListener('click', skipTimer);
+
+        el.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                switchMode(tab.dataset.mode);
+            });
+        });
+
+        el.settingsToggle.addEventListener('click', () => {
+            el.settingsPanel.classList.toggle('open');
+            el.settingsToggle.style.transform = el.settingsPanel.classList.contains('open')
+                ? 'rotate(60deg)' : 'rotate(0deg)';
+            playClick();
+        });
+
+        // Settings sliders
+        [el.pomodoroTime, el.shortBreakTime, el.longBreakTime, el.longBreakInterval].forEach(input => {
+            input.addEventListener('input', updateConfig);
+        });
+        el.autoStart.addEventListener('change', updateConfig);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleTimer();
+            } else if (e.code === 'KeyR' && !e.ctrlKey && !e.metaKey) {
+                resetTimer();
+            } else if (e.code === 'KeyS' && !e.ctrlKey && !e.metaKey) {
+                skipTimer();
+            }
+        });
+
+        // Request notification permission on load
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // ─── Init ───────────────────────────────────
+        renderDots();
+        updateDisplay();
+    </script>
+</body>
+</html>
