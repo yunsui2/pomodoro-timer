@@ -38,7 +38,7 @@ class WallpaperRepo(private val context: Context) {
                     original
                 }
 
-                wallpaperManager.setBitmap(bitmap, null, false)
+                wallpaperManager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_SYSTEM)
                 bitmap.recycle()
                 Result.success(Unit)
             } catch (e: IOException) {
