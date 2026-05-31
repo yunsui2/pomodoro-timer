@@ -23,17 +23,25 @@ import com.example.wallpaperchanger.viewmodel.MainViewModel
 @Composable
 fun FolderPicker(
     viewModel: MainViewModel,
+    refreshKey: Int = 0,
+    onRequestStoragePermission: () -> Unit,
     onBack: () -> Unit
 ) {
     val settings by viewModel.settings.collectAsState()
-    val folders = remember { viewModel.folderRepo.scanImageFolders() }
+
+    // 每次进入页面时重新扫描（由 refreshKey 触发）
+    val folders = remember(refreshKey) { viewModel.folderRepo.scanImageFolders() }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         uri?.let {
+            // 获取持久化权限，确保定时任务也能访问
+            viewModel.folderRepo.takePersistablePermission(it)
+
             val (name, count) = viewModel.folderRepo.resolveFolderInfo(it)
             viewModel.setFolderUri(it, name, count)
+            onBack()
         }
     }
 
@@ -53,6 +61,7 @@ fun FolderPicker(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
+            // 手动浏览按钮（始终可用，不依赖权限）
             OutlinedButton(
                 onClick = { folderPickerLauncher.launch(null) },
                 modifier = Modifier
@@ -76,14 +85,32 @@ fun FolderPicker(
             )
 
             if (folders.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         "未找到包含图片的文件夹",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                        fontSize = 14.sp
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "请授予存储权限以自动扫描，\n或使用上方「手动浏览」",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = onRequestStoragePermission,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("🔐 授予存储权限")
+                    }
                 }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -91,7 +118,7 @@ fun FolderPicker(
                         FolderItem(
                             folder = folder,
                             isSelected = settings.folderUri.contains(
-                                folder.uri.toString().takeLast(20)
+                                folder.uri.getQueryParameter("bucketId") ?: ""
                             ),
                             onClick = {
                                 viewModel.setFolderUri(folder.uri, folder.name, folder.count)

@@ -64,6 +64,9 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
+    // DocumentFile (SAF)
+    implementation("androidx.documentfile:documentfile:1.0.1")
+
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
