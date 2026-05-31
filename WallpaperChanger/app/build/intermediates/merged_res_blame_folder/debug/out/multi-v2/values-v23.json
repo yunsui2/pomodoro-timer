@@ -1,0 +1,36 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.wallpaperchanger.app-mergeDebugResources-57:/values-v23/values-v23.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\zhangjiaxin\\.gradle\\caches\\transforms-3\\e5a20f1fc905537ac2a8b3c08e5cd9c7\\transformed\\work-runtime-2.9.0\\res\\values-v23\\values-v23.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,121",
+                        "endColumns": "65,62",
+                        "endOffsets": "116,179"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\zhangjiaxin\\.gradle\\caches\\transforms-3\\91fe5c63c31191b850e75e2a1f8b507c\\transformed\\glance-appwidget-1.0.0\\res\\values-v23\\values-v23.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "55",
+                        "endOffsets": "106"
+                    },
+                    "to": {
+                        "startLines": "4",
+                        "startColumns": "4",
+                        "startOffsets": "184",
+                        "endColumns": "55",
+                        "endOffsets": "235"
+                    }
+                }
+            ]
+        }
+    ]
+}

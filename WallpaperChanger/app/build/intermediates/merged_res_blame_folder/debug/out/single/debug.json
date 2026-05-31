@@ -1,0 +1,34 @@
+[
+    {
+        "merged": "com.example.wallpaperchanger.app-merged_res-59:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.example.wallpaperchanger.app-main-61:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-merged_res-59:\\drawable_ic_widget_refresh.xml.flat",
+        "source": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-main-61:\\drawable\\ic_widget_refresh.xml"
+    },
+    {
+        "merged": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-merged_res-59:\\layout_widget_layout.xml.flat",
+        "source": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-main-61:\\layout\\widget_layout.xml"
+    },
+    {
+        "merged": "com.example.wallpaperchanger.app-merged_res-59:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.example.wallpaperchanger.app-main-61:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-merged_res-59:\\drawable_widget_background.xml.flat",
+        "source": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-main-61:\\drawable\\widget_background.xml"
+    },
+    {
+        "merged": "com.example.wallpaperchanger.app-merged_res-59:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.example.wallpaperchanger.app-main-61:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-merged_res-59:\\xml_wallpaper_widget_info.xml.flat",
+        "source": "C:\\Users\\zhangjiaxin\\.gradle\\daemon\\8.5\\com.example.wallpaperchanger.app-main-61:\\xml\\wallpaper_widget_info.xml"
+    },
+    {
+        "merged": "com.example.wallpaperchanger.app-merged_res-59:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.example.wallpaperchanger.app-main-61:/mipmap-anydpi-v26/ic_launcher.xml"
+    }
+]

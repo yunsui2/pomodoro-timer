@@ -63,7 +63,7 @@ fun FolderPicker(
                 Text("📂 手动浏览文件夹...", fontSize = 14.sp)
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
                 text = "——— 或选择下方文件夹 ———",
