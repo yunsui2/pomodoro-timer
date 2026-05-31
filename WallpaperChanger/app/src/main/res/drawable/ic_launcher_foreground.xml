@@ -1,27 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Frame within a Frame — 手作墨迹图标
+  墨色方形 + 朱砂小印，搭配纸色背景。
+  Android 矢量不支持 SVG 滤镜，用路径近似毛笔笔触。
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!--
-    实心白色圆角方框，正中央挖出一个极小空心方块。
-    视觉错觉：大方块凸起，小方块凹陷（Frame within a Frame）。
-    使用 evenOdd 填充规则实现镂空效果。
-    -->
+
+    <!-- 墨色方形的四条边 — 用略有弧度的小段模拟毛笔不完美笔触 -->
+
+    <!-- 上边 -->
     <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="
-            M22,28
-            q0,-6 6,-6
-            h52
-            q6,0 6,6
-            v52
-            q0,6 -6,6
-            h-52
-            q-6,0 -6,-6
-            Z
-            M49,49 h10 v10 h-10 Z
-        " />
+        android:fillColor="#00000000"
+        android:strokeColor="#2A2A2A"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M 29,28 Q 43,26 54,27.5 Q 65,26 79,28.5"
+        android:strokeAlpha="0.6" />
+
+    <!-- 右边 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2A2A2A"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M 80,30 Q 81,44 80,54 Q 81,64 79,80"
+        android:strokeAlpha="0.55" />
+
+    <!-- 下边 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2A2A2A"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M 78,81 Q 65,82 54,80 Q 43,82 27,80"
+        android:strokeAlpha="0.5" />
+
+    <!-- 左边（故意不连续，模拟飞白） -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2A2A2A"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M 27,78 Q 25,60 26,48"
+        android:strokeAlpha="0.45" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2A2A2A"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M 27,38 Q 28,32 28,28"
+        android:strokeAlpha="0.4" />
+
+    <!-- 方形内部斑驳墨色填充 — 大块极淡填充 -->
+    <path
+        android:fillColor="#2A2A2A"
+        android:fillAlpha="0.08"
+        android:pathData="M 31,31 h 46 v 46 h -46 z" />
+
+    <!-- 右下角区域略浓的墨色 -->
+    <path
+        android:fillColor="#2A2A2A"
+        android:fillAlpha="0.10"
+        android:pathData="M 55,50 Q 68,52 72,62 Q 73,72 60,74 Q 50,72 48,62 Q 48,55 55,50 z" />
+
+    <!-- 墨韵圆点 -->
+    <path
+        android:fillColor="#2A2A2A"
+        android:fillAlpha="0.05"
+        android:pathData="M 58,46 a 10,10 0 1,0 20,0 a 10,10 0 1,0 -20,0 z" />
+    <path
+        android:fillColor="#2A2A2A"
+        android:fillAlpha="0.04"
+        android:pathData="M 42,60 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0 z" />
+
+    <!-- 朱砂小印 — 墨色中最浓的一笔里的红色标记 -->
+    <path
+        android:fillColor="#B22222"
+        android:fillAlpha="0.85"
+        android:pathData="M 67,62 h 3 v 3 h -3 z" />
+    <path
+        android:fillColor="#8B0000"
+        android:fillAlpha="0.25"
+        android:strokeColor="#8B0000"
+        android:strokeWidth="0.3"
+        android:strokeAlpha="0.3"
+        android:pathData="M 66.3,61.3 h 4.4 v 4.4 h -4.4 z" />
+
 </vector>
