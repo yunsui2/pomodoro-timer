@@ -18,12 +18,23 @@ class WallpaperActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_CHANGE_WALLPAPER = "com.example.wallpaperchanger.CHANGE_WALLPAPER"
+        const val ACTION_INTERVAL_CHANGE = "com.example.wallpaperchanger.INTERVAL_CHANGE"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == ACTION_CHANGE_WALLPAPER) {
-            CoroutineScope(Dispatchers.IO).launch {
-                changeWallpaper(context)
+        when (intent.action) {
+            ACTION_CHANGE_WALLPAPER -> {
+                CoroutineScope(Dispatchers.IO).launch { changeWallpaper(context) }
+            }
+            ACTION_INTERVAL_CHANGE -> {
+                CoroutineScope(Dispatchers.IO).launch {
+                    changeWallpaper(context)
+                    // 重新预约下一次间隔闹钟
+                    val settings = SettingsStore(context).settingsFlow.first()
+                    if (settings.intervalEnabled && settings.useAlarmManager) {
+                        SchedulerRepo(context).scheduleIntervalAlarm(settings.intervalHours)
+                    }
+                }
             }
         }
     }
@@ -64,7 +75,7 @@ class BootReceiver : BroadcastReceiver() {
                 val schedulerRepo = SchedulerRepo(context)
                 val settings = settingsStore.settingsFlow.first()
                 if (settings.intervalEnabled) {
-                    schedulerRepo.scheduleInterval(settings.intervalHours)
+                    schedulerRepo.scheduleInterval(settings.intervalHours, settings.useAlarmManager)
                 }
                 if (settings.scheduledEnabled) {
                     schedulerRepo.scheduleAtTime(settings.scheduledHour, settings.scheduledMinute)

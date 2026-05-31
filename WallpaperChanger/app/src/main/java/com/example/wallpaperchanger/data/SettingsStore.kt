@@ -26,6 +26,7 @@ class SettingsStore(private val context: Context) {
         private val KEY_WALLPAPER_MODE = stringPreferencesKey("wallpaper_mode")
         private val KEY_SEQUENCE_MODE = stringPreferencesKey("sequence_mode")
         private val KEY_CURRENT_INDEX = intPreferencesKey("current_index")
+        private val KEY_USE_ALARM_MANAGER = booleanPreferencesKey("use_alarm_manager")
 
         const val WALLPAPER_MODE_SCROLL = "scroll"
         const val WALLPAPER_MODE_STATIC = "static"
@@ -44,7 +45,8 @@ class SettingsStore(private val context: Context) {
         val scheduledMinute: Int = 0,
         val wallpaperMode: String = WALLPAPER_MODE_SCROLL,
         val sequenceMode: String = SEQUENCE_MODE_RANDOM,
-        val currentIndex: Int = 0
+        val currentIndex: Int = 0,
+        val useAlarmManager: Boolean = false
     )
 
     val settingsFlow: Flow<WallpaperSettings> = context.dataStore.data.map { prefs ->
@@ -59,7 +61,8 @@ class SettingsStore(private val context: Context) {
             scheduledMinute = prefs[KEY_SCHEDULED_MINUTE] ?: 0,
             wallpaperMode = prefs[KEY_WALLPAPER_MODE] ?: WALLPAPER_MODE_SCROLL,
             sequenceMode = prefs[KEY_SEQUENCE_MODE] ?: SEQUENCE_MODE_RANDOM,
-            currentIndex = prefs[KEY_CURRENT_INDEX] ?: 0
+            currentIndex = prefs[KEY_CURRENT_INDEX] ?: 0,
+            useAlarmManager = prefs[KEY_USE_ALARM_MANAGER] ?: false
         )
     }
 
@@ -126,6 +129,14 @@ class SettingsStore(private val context: Context) {
         context.dataStore.updateData { prefs ->
             prefs.toMutablePreferences().apply {
                 set(KEY_CURRENT_INDEX, index)
+            }
+        }
+    }
+
+    suspend fun setUseAlarmManager(enabled: Boolean) {
+        context.dataStore.updateData { prefs ->
+            prefs.toMutablePreferences().apply {
+                set(KEY_USE_ALARM_MANAGER, enabled)
             }
         }
     }

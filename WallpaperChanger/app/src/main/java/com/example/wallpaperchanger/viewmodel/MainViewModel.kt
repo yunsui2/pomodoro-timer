@@ -68,10 +68,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             settingsStore.setIntervalEnabled(enabled)
             settingsStore.setIntervalHours(hours)
             if (enabled) {
-                schedulerRepo.scheduleInterval(hours)
+                schedulerRepo.scheduleInterval(hours, settings.value.useAlarmManager)
             } else {
-                schedulerRepo.cancelInterval()
+                schedulerRepo.cancelInterval(settings.value.useAlarmManager)
             }
+        }
+    }
+
+    fun setUseAlarmManager(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsStore.setUseAlarmManager(enabled)
+            // 如果间隔模式正在运行，切换底层实现
+            if (settings.value.intervalEnabled) {
+                schedulerRepo.cancelInterval(!enabled)  // 取消旧的
+                schedulerRepo.scheduleInterval(settings.value.intervalHours, enabled) // 启动新的
+            }
+            val label = if (enabled) "持久模式：划掉App后继续定时" else "标准模式：划掉App后定时取消"
+            _toastMessage.emit(label)
         }
     }
 

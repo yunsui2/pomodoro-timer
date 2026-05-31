@@ -100,6 +100,13 @@ fun TimerSettings(
                     }
                 )
             }
+
+            // 持久模式开关（两个模式下都可见）
+            Spacer(modifier = Modifier.height(20.dp))
+            PersistentModeCard(
+                useAlarmManager = settings.useAlarmManager,
+                onToggle = { viewModel.setUseAlarmManager(it) }
+            )
         }
     }
 }
@@ -282,6 +289,44 @@ private fun ScheduledSettingsCard(
                     Text("保存设置")
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PersistentModeCard(
+    useAlarmManager: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (useAlarmManager)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("🔒 划掉App后继续定时", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Switch(checked = useAlarmManager, onCheckedChange = onToggle)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = if (useAlarmManager)
+                    "使用系统闹钟实现，划掉App或重启手机后定时依然有效。略多耗电。"
+                else
+                    "使用WorkManager实现，省电但划掉App后定时任务会被系统取消。",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
         }
     }
 }

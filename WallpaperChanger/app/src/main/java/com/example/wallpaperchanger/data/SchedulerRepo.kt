@@ -16,10 +16,30 @@ class SchedulerRepo(private val context: Context) {
 
     companion object {
         private const val INTERVAL_WORK_NAME = "wallpaper_interval_change"
-        private const val SCHEDULED_REQUEST_CODE = 1001
+        private const val REQ_SCHEDULED = 1001
+        private const val REQ_INTERVAL_ALARM = 2001
     }
 
-    fun scheduleInterval(hours: Int) {
+    /** 间隔定时 — 根据 useAlarmManager 选择底层实现 */
+    fun scheduleInterval(hours: Int, useAlarmManager: Boolean) {
+        if (useAlarmManager) {
+            scheduleIntervalAlarm(hours)
+        } else {
+            scheduleIntervalWorkManager(hours)
+        }
+    }
+
+    fun cancelInterval(useAlarmManager: Boolean) {
+        if (useAlarmManager) {
+            cancelIntervalAlarm()
+        } else {
+            cancelIntervalWorkManager()
+        }
+    }
+
+    // ---- WorkManager 模式（标准，可能被杀） ----
+
+    private fun scheduleIntervalWorkManager(hours: Int) {
         val workRequest = PeriodicWorkRequestBuilder<WallpaperChangeWorker>(
             hours.toLong(), TimeUnit.HOURS
         )
@@ -37,9 +57,48 @@ class SchedulerRepo(private val context: Context) {
         )
     }
 
-    fun cancelInterval() {
+    private fun cancelIntervalWorkManager() {
         WorkManager.getInstance(context).cancelUniqueWork(INTERVAL_WORK_NAME)
     }
+
+    // ---- AlarmManager 模式（持久，划掉 App 也不丢） ----
+
+    fun scheduleIntervalAlarm(hours: Int) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val intent = Intent(context, WallpaperActionReceiver::class.java).apply {
+            action = WallpaperActionReceiver.ACTION_INTERVAL_CHANGE
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, REQ_INTERVAL_ALARM, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val calendar = Calendar.getInstance().apply {
+            add(Calendar.HOUR_OF_DAY, hours)
+        }
+
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            pendingIntent
+        )
+    }
+
+    fun cancelIntervalAlarm() {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, WallpaperActionReceiver::class.java).apply {
+            action = WallpaperActionReceiver.ACTION_INTERVAL_CHANGE
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, REQ_INTERVAL_ALARM, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+    }
+
+    // ---- 指定时间定时（每日） ----
 
     fun scheduleAtTime(hour: Int, minute: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -49,7 +108,7 @@ class SchedulerRepo(private val context: Context) {
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
-            context, SCHEDULED_REQUEST_CODE, intent,
+            context, REQ_SCHEDULED, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -63,10 +122,9 @@ class SchedulerRepo(private val context: Context) {
             }
         }
 
-        alarmManager.setRepeating(
+        alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             calendar.timeInMillis,
-            AlarmManager.INTERVAL_DAY,
             pendingIntent
         )
     }
@@ -77,7 +135,7 @@ class SchedulerRepo(private val context: Context) {
             action = WallpaperActionReceiver.ACTION_CHANGE_WALLPAPER
         }
         val pendingIntent = PendingIntent.getBroadcast(
-            context, SCHEDULED_REQUEST_CODE, intent,
+            context, REQ_SCHEDULED, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
@@ -96,9 +154,6 @@ class SchedulerRepo(private val context: Context) {
     }
 }
 
-/**
- * WorkManager Worker: 在后台自动换壁纸。
- */
 class WallpaperChangeWorker(
     context: Context,
     workerParams: WorkerParameters
