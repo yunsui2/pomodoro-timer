@@ -23,6 +23,14 @@ class SettingsStore(private val context: Context) {
         private val KEY_SCHEDULED_ENABLED = booleanPreferencesKey("scheduled_enabled")
         private val KEY_SCHEDULED_HOUR = intPreferencesKey("scheduled_hour")
         private val KEY_SCHEDULED_MINUTE = intPreferencesKey("scheduled_minute")
+        private val KEY_WALLPAPER_MODE = stringPreferencesKey("wallpaper_mode")
+        private val KEY_SEQUENCE_MODE = stringPreferencesKey("sequence_mode")
+        private val KEY_CURRENT_INDEX = intPreferencesKey("current_index")
+
+        const val WALLPAPER_MODE_SCROLL = "scroll"
+        const val WALLPAPER_MODE_STATIC = "static"
+        const val SEQUENCE_MODE_RANDOM = "random"
+        const val SEQUENCE_MODE_SEQUENTIAL = "sequential"
     }
 
     data class WallpaperSettings(
@@ -33,7 +41,10 @@ class SettingsStore(private val context: Context) {
         val intervalHours: Int = 3,
         val scheduledEnabled: Boolean = false,
         val scheduledHour: Int = 8,
-        val scheduledMinute: Int = 0
+        val scheduledMinute: Int = 0,
+        val wallpaperMode: String = WALLPAPER_MODE_SCROLL,
+        val sequenceMode: String = SEQUENCE_MODE_RANDOM,
+        val currentIndex: Int = 0
     )
 
     val settingsFlow: Flow<WallpaperSettings> = context.dataStore.data.map { prefs ->
@@ -45,7 +56,10 @@ class SettingsStore(private val context: Context) {
             intervalHours = prefs[KEY_INTERVAL_HOURS] ?: 3,
             scheduledEnabled = prefs[KEY_SCHEDULED_ENABLED] ?: false,
             scheduledHour = prefs[KEY_SCHEDULED_HOUR] ?: 8,
-            scheduledMinute = prefs[KEY_SCHEDULED_MINUTE] ?: 0
+            scheduledMinute = prefs[KEY_SCHEDULED_MINUTE] ?: 0,
+            wallpaperMode = prefs[KEY_WALLPAPER_MODE] ?: WALLPAPER_MODE_SCROLL,
+            sequenceMode = prefs[KEY_SEQUENCE_MODE] ?: SEQUENCE_MODE_RANDOM,
+            currentIndex = prefs[KEY_CURRENT_INDEX] ?: 0
         )
     }
 
@@ -88,6 +102,30 @@ class SettingsStore(private val context: Context) {
             prefs.toMutablePreferences().apply {
                 set(KEY_SCHEDULED_HOUR, hour)
                 set(KEY_SCHEDULED_MINUTE, minute)
+            }
+        }
+    }
+
+    suspend fun setWallpaperMode(mode: String) {
+        context.dataStore.updateData { prefs ->
+            prefs.toMutablePreferences().apply {
+                set(KEY_WALLPAPER_MODE, mode)
+            }
+        }
+    }
+
+    suspend fun setSequenceMode(mode: String) {
+        context.dataStore.updateData { prefs ->
+            prefs.toMutablePreferences().apply {
+                set(KEY_SEQUENCE_MODE, mode)
+            }
+        }
+    }
+
+    suspend fun setCurrentIndex(index: Int) {
+        context.dataStore.updateData { prefs ->
+            prefs.toMutablePreferences().apply {
+                set(KEY_CURRENT_INDEX, index)
             }
         }
     }

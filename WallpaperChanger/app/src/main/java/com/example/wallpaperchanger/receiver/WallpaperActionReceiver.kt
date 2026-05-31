@@ -37,8 +37,17 @@ class WallpaperActionReceiver : BroadcastReceiver() {
         if (settings.folderUri.isEmpty()) return
 
         val folderUri = Uri.parse(settings.folderUri)
-        val result = wallpaperRepo.setRandomWallpaperFromFolder(folderRepo, folderUri)
+        val result = wallpaperRepo.setWallpaperFromFolder(
+            folderRepo = folderRepo,
+            folderUri = folderUri,
+            sequenceMode = settings.sequenceMode,
+            currentIndex = settings.currentIndex,
+            wallpaperMode = settings.wallpaperMode
+        )
         if (result.isSuccess) {
+            if (settings.sequenceMode == SettingsStore.SEQUENCE_MODE_SEQUENTIAL) {
+                settingsStore.setCurrentIndex(result.getOrNull()?.second ?: 0)
+            }
             WallpaperNotification.showChangedNotification(context)
         }
     }

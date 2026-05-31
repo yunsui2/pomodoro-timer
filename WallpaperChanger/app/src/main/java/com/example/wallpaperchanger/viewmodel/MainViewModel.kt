@@ -27,18 +27,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     fun changeWallpaper() {
-        val folderUriStr = settings.value.folderUri
-        if (folderUriStr.isEmpty()) {
+        val s = settings.value
+        if (s.folderUri.isEmpty()) {
             viewModelScope.launch { _toastMessage.emit("请先选择壁纸来源文件夹") }
             return
         }
 
         viewModelScope.launch {
             _isLoading.value = true
-            val folderUri = Uri.parse(folderUriStr)
-            val result = wallpaperRepo.setRandomWallpaperFromFolder(folderRepo, folderUri)
-            result.onSuccess {
-                _toastMessage.emit("壁纸已更换 ✨")
+            val folderUri = Uri.parse(s.folderUri)
+            val result = wallpaperRepo.setWallpaperFromFolder(
+                folderRepo = folderRepo,
+                folderUri = folderUri,
+                sequenceMode = s.sequenceMode,
+                currentIndex = s.currentIndex,
+                wallpaperMode = s.wallpaperMode
+            )
+            result.onSuccess { (_, newIndex) ->
+                if (s.sequenceMode == SettingsStore.SEQUENCE_MODE_SEQUENTIAL) {
+                    settingsStore.setCurrentIndex(newIndex)
+                }
+                val modeLabel = if (s.wallpaperMode == SettingsStore.WALLPAPER_MODE_STATIC) "静态" else "滚动"
+                _toastMessage.emit("壁纸已更换 ✨ ($modeLabel)")
             }.onFailure { e ->
                 _toastMessage.emit("更换失败: ${e.message}")
             }
@@ -74,6 +84,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 schedulerRepo.cancelScheduledTime()
             }
+        }
+    }
+
+    fun setWallpaperMode(mode: String) {
+        viewModelScope.launch {
+            settingsStore.setWallpaperMode(mode)
+            val label = if (mode == SettingsStore.WALLPAPER_MODE_STATIC) "静态模式" else "滚动模式"
+            _toastMessage.emit("壁纸呈现: $label")
+        }
+    }
+
+    fun setSequenceMode(mode: String) {
+        viewModelScope.launch {
+            settingsStore.setSequenceMode(mode)
+            if (mode == SettingsStore.SEQUENCE_MODE_SEQUENTIAL) {
+                settingsStore.setCurrentIndex(0)
+            }
+            val label = if (mode == SettingsStore.SEQUENCE_MODE_SEQUENTIAL) "顺序更换" else "随机更换"
+            _toastMessage.emit("换图顺序: $label")
         }
     }
 
